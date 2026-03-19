@@ -1,6 +1,6 @@
 # Claude Skills Pro
 
-Skills partagees pour Claude Code, utilisees par l'equipe SINAPSE (GIE SINAPSE, Noumea, Nouvelle-Caledonie).
+Skills partagees pour Claude Code
 
 ## Skills disponibles
 
@@ -62,7 +62,3 @@ Chaque ADR suit le template MADR v4 adapte pour SINAPSE :
 6. Criteres de verification
 7. Pours et contres des differentes options
 8. Autres informations et references
-
-## Licence
-
-Usage interne GIE SINAPSE.
