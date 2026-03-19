@@ -1,0 +1,15 @@
+# Confluence Upload/Download Dependencies
+
+# Core
+requests>=2.31.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.1
+
+# Upload
+atlassian-python-api>=3.41.0  # Confluence REST API client
+md2cf>=1.0.0                   # Markdown to Confluence storage format
+mistune==0.8.4                 # Markdown parser (md2cf 1.0.x requires 0.8.x)
+
+# Download (optional — only needed for download_confluence.py)
+# markdownify>=0.11.6
+# beautifulsoup4>=4.12.0

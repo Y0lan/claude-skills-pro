@@ -7,7 +7,7 @@ description: Use when writing, editing, updating, or publishing Architecture Dec
 
 ## Overview
 
-ADRs follow **MADR v4** adapted for SINAPSE: French, Obsidian wikilinks, Confluence badge macros. Each ADR answers exactly one architectural question and is published to Confluence via a custom script.
+ADRs follow **MADR v4** adapted for SINAPSE: French, Obsidian wikilinks, Confluence badge macros. Each ADR answers exactly one architectural question and is published to Confluence via the `publish_sinapse_adrs.py` script.
 
 ## Quick Reference
 
@@ -17,7 +17,7 @@ ADRs follow **MADR v4** adapted for SINAPSE: French, Obsidian wikilinks, Conflue
 | Naming | `ADR-NNN — Titre du sujet.md` |
 | Statuses | `Proposé` / `Validé` / `Supersédé` / `En révision` / `Rejeté` |
 | Confluence ADR parent | ID `207028250` (= ADR-000) |
-| Publish script | `.worktrees/clean-publish/publish_sinapse_adrs.py` |
+| Publish script | `scripts/publish_sinapse_adrs.py` (in claude-skills-pro repo) |
 | Index | `ADR-000 — Index.md` |
 
 ### Rôles ADR
@@ -210,7 +210,31 @@ Also add the ADR to the dependency table (Logique organisationnelle) if it condi
 
 ## Step 4: Publish to Confluence
 
-**NEVER use MCP for uploading** — 10-20 KB size limit causes failures. Always use the script.
+**Always use the publish script.** Never use MCP or manual Confluence uploads (10-20 KB size limits cause failures).
+
+### Setup (one-time)
+
+```bash
+# Install dependencies
+cd <path-to>/claude-skills-pro/scripts
+pip install -r requirements.txt
+
+# Set your Confluence credentials (add to ~/.bashrc or ~/.zshrc)
+export CONFLUENCE_URL="https://sinapse-gie-nc.atlassian.net/wiki"
+export CONFLUENCE_USERNAME="your-email@example.com"
+export CONFLUENCE_API_TOKEN="your-api-token"
+
+# Set your Atlassian account ID (for last-editor safety check)
+# Find yours: Profile → Account Settings → account ID in URL
+export CONFLUENCE_ACCOUNT_ID="712020:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+### Copy scripts to vault working directory
+
+```bash
+# Copy the publish scripts to the vault publish directory
+cp <path-to>/claude-skills-pro/scripts/*.py <vault-root>/.worktrees/clean-publish/
+```
 
 ### Existing page (update)
 
@@ -222,30 +246,32 @@ python3 publish_sinapse_adrs.py --dry-run
 
 # Upload one file
 python3 publish_sinapse_adrs.py --only ADR-NNN
+
+# Force upload (skip last-editor check — use after merging someone else's edits)
+python3 publish_sinapse_adrs.py --only ADR-NNN --force
 ```
 
-### New page (no Confluence page yet)
-
-1. Create the page first via MCP under parent `207028250`:
-
-```
-mcp__claude_ai_Atlassian__createConfluencePage
-  parentId: "207028250"
-  title: "ADR-NNN : Titre du sujet"
-  content: "Placeholder"
-```
-
-2. Note the returned page ID, then upload:
+### New page (create + upload)
 
 ```bash
-python3 publish_sinapse_adrs.py --only ADR-NNN --id <PAGE_ID>
+cd <vault-root>/.worktrees/clean-publish
+
+# Create the new page AND upload content in one step
+python3 publish_sinapse_adrs.py --new "ADR-NNN — Titre du sujet"
 ```
 
-3. Add the new page ID to `CC ID.md` under the Confluence structure section.
+The script will:
+1. Create the page under the ADR parent (`207028250`)
+2. Upload the converted content
+3. Print the new page ID — add it to `MANIFEST` in the script and to `CC ID.md`
 
 ### Safety: last-editor check
 
-The publish script refuses to overwrite a page if the last editor is not you. This prevents accidental overwrites of manual edits made by other team members on Confluence. If you need to force an update after merging someone else's changes, temporarily bypass the `check_last_editor` guard in the script.
+The publish script compares `CONFLUENCE_ACCOUNT_ID` against the page's last editor before overwriting. If someone else edited the page on Confluence, the script skips it with a warning. This prevents accidental overwrites of manual edits.
+
+- **CONFLUENCE_ACCOUNT_ID not set**: safety check is disabled (warning printed)
+- **--force flag**: explicitly skips the safety check
+- **Normal operation**: only overwrites pages you last edited
 
 ---
 
@@ -298,7 +324,7 @@ Full page ID mapping is maintained in `CC ID.md` at vault root.
 | Em-dash `—` in body text | Use `:` or `,` or rephrase |
 | Décision au conditionnel ("nous choisirions") | "Je choisis" — present tense, positive, first person singular |
 | Wikilink without alias `[[Titre]]` | Use `[[Titre\|ADR-NNN]]` to show only the number |
-| Upload via MCP | Use `publish_sinapse_adrs.py` script |
+| Upload via MCP or manual Confluence edit | Use `publish_sinapse_adrs.py` script |
 | `## Sommaire` omitted | Keep it — auto-converted to TOC macro |
 | Decision Maker = "l'équipe" | Must be named individuals (Pierre Rossato) |
 | Mermaid/PlantUML diagrams | Convert to PNG/SVG manually before upload (not handled by script) |
